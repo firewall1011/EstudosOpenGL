@@ -80,11 +80,11 @@ namespace TLibrary {
 		glAttachShader(program, fragment);
 		
 		glLinkProgram(program);
-		/*glValidateProgram(program);*/
+		glValidateProgram(program);
 
 		// Deleta .obj da memoria
-	/*	glDeleteShader(vertex);
-		glDeleteShader(fragment);*/
+		glDeleteShader(vertex);
+		glDeleteShader(fragment);
 
 		return program;
 	}
@@ -128,7 +128,7 @@ namespace TLibrary {
 		glUseProgram(0);
 	}
 
-	GLuint Shader::GetID()
+	GLuint Shader::GetID() const
 	{
 		return _uid;
 	}

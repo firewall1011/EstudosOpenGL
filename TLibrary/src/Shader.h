@@ -20,7 +20,7 @@ namespace TLibrary {
 		void Bind() const;
 		void Unbind() const;
 		
-		unsigned int GetID();
+		unsigned int GetID() const;
 
 		static ShaderCode ParseShader(const std::string& filepath);
 		static void WriteShader(const std::string& filepath, const char* vertex, const char* fragment);

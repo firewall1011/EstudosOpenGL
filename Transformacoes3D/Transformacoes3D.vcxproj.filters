@@ -15,13 +15,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp">
+    <ClCompile Include="src\Cilindro.cpp">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shaders\blue.shader" />
-    <None Include="res\shaders\red.shader" />
-    <None Include="res\shaders\color.shader" />
+    <None Include="res\common.shader" />
   </ItemGroup>
 </Project>
