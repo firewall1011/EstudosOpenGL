@@ -16,9 +16,14 @@ struct vec3
 {
     float x, y, z;
 
-    vec3 normalized();
-    float magnitude();
-    vec3 operator*(const float);
+    vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+    vec3(float f) : x(f), y(f), z(f) {}
+    vec3() : x(0), y(0), z(0) {}
+
+    vec3 normalized() const;
+    float magnitude() const;
+    vec3 operator*(const float) const;
+    void operator*=(const float);
     void operator+=(const vec3&);
 };
 
@@ -30,3 +35,6 @@ vec2* CriarQuadrado(float largura, const vec2& centro);
 vec2* CriarRetangulo(float largura, float altura, const vec2& centro);
 
 vec3* CriarCilindro(const int num_vertices = 16, const float raio = 1.0, const float height = 1.0f, const vec3& base = { 0 });
+
+vec3 cos(const vec3&);
+vec3 sin(const vec3&);

@@ -13,11 +13,18 @@
 #include "mat4.h"
 #include "Exercicios.h"
 
+
+static vec3 translation = { 0.0f };
+static vec3 scale = { 1.0f };
 static vec3 rotation = { 0.0f };
+static vec3 last_mouse_pos = { 0.0f };
+static int cursor_locked = 1;
 
 static void HandleInput(GLFWwindow* window);
+static void HandleCursorPosInput(GLFWwindow* window, double xpos, double ypos);
+static void HandleMouseButtonInput(GLFWwindow* window, int button, int action, int mods);
 
-int CilindroApp() {
+int PiramideApp() {
 
     // inicicializando o sistema de\ janelas
     glfwInit();
@@ -39,31 +46,34 @@ int CilindroApp() {
 
     TLibrary::Shader shader("res/common.shader");
 
-    const int num_vertices = 32;
-    const int num_indices = num_vertices * 2;
+    const int num_vertices = 5;
+    const int num_indices = 21;
     
-    vec3 base = { 0.0f, 0.25f, 0.0f };
-    vec3* vertexBufferArray = CriarCilindro(num_vertices, 0.25f, 0.5f, base);
-
-    GLuint* indexBufferArray = new GLuint[num_indices];
-
-    for (unsigned int i = 0; i < num_vertices; i++)
-        indexBufferArray[i] = i;
-    for (unsigned int i = 0, j = 0; i < num_vertices; i+=2, j++)
+    vec3 base(0.0f);
+    vec3 vertexBufferArray[num_vertices] = 
     {
-        int lower_circle_index = j + num_vertices;
-        int upper_circle_index = j + (num_vertices * 1.5f);
-        
-        indexBufferArray[lower_circle_index] = i;
-        indexBufferArray[upper_circle_index] = i+1;
-    }
+        {0, 1, 0}, {-0.5f, 0, -0.5f}, {-0.5f, 0, 0.5f}, {0.5f, 0, 0.5f}, {0.5f, 0, -0.5f}
+    };
 
+    for(auto& vertex : vertexBufferArray)
+    {
+        std::cout << vertex << std::endl;
+    }
+    GLuint indexBufferArray[num_indices] = 
+    {
+        0, 1, 2,
+        0, 2, 3,
+        0, 3, 4,
+        0, 4, 5,
+        0, 5, 1,
+        1, 2, 3, 
+        1, 3, 4
+    };
     
     GLuint buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * num_vertices, vertexBufferArray, GL_STATIC_DRAW);
-    
     
     GLuint indexBufferObject;
     glGenBuffers(1, &indexBufferObject);
@@ -78,6 +88,11 @@ int CilindroApp() {
     glEnableVertexAttribArray(loc_position);
     glVertexAttribPointer(loc_position, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0); // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml
 
+    // Hide cursor for rotation
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, HandleCursorPosInput);
+    glfwSetMouseButtonCallback(window, HandleMouseButtonInput);
+    
     // Exibindo nossa janela
     glfwShowWindow(window);
 
@@ -90,33 +105,27 @@ int CilindroApp() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         HandleInput(window);
 
         mat4 model = mat4::Identity();
-        model = mat4::rotateX(rotation.x) * mat4::rotateY(rotation.y) * mat4::rotateZ(rotation.z) * model;
+        model = mat4::translate(translation) * mat4::rotate(rotation) * mat4::scale(scale) * model;
 
         // Transforma e desenha cilindro
         shader.Bind();
         glUniformMatrix4fv(loc_transform, 1, GL_TRUE, model.m);
 
-        glUniform4f(loc_color, 1, 0, 0, 1);
-        glDrawElements(GL_TRIANGLE_STRIP, num_vertices, GL_UNSIGNED_INT, nullptr);
+        glUniform4f(loc_color, 0, 0, 0, 1);
+        glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, nullptr);
         
-        glUniform4f(loc_color, 0, 1, 0, 1);
-        glDrawElements(GL_TRIANGLE_FAN, num_vertices/2, GL_UNSIGNED_INT, (const void*) (num_vertices * sizeof(GLuint)));
-        
-        glUniform4f(loc_color, 0, 0, 1, 1);
-        glDrawElements(GL_TRIANGLE_FAN, num_vertices/2, GL_UNSIGNED_INT, (const void*) ((num_vertices + num_vertices / 2)*sizeof(GLuint)));
-
         glfwSwapBuffers(window);
         
         {
             // Wait for end of frame
             using namespace std::chrono_literals;
             using namespace std::chrono;
-            std::this_thread::sleep_for(start + MS_PER_FRAME - steady_clock::now());
+            std::this_thread::sleep_for(start - steady_clock::now() + MS_PER_FRAME );
         }
 #ifdef DEBUG
         while (int error = glGetError() != GL_NO_ERROR) 
@@ -124,11 +133,7 @@ int CilindroApp() {
             std::cout << "GlErrorFlag: " << error << std::endl;
         }
 #endif // DEBUG
-
     }
-
-    delete[] vertexBufferArray;
-    delete[] indexBufferArray;
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -137,11 +142,39 @@ int CilindroApp() {
 }
 
 static void HandleInput(GLFWwindow* window) {
-    vec3 applyRot;
     
-    applyRot.y = glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A);
-    applyRot.x = glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S);
-    applyRot.z = glfwGetKey(window, GLFW_KEY_E) - glfwGetKey(window, GLFW_KEY_Q);
+    vec3 applyTrans;
+    applyTrans.x = glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A);
+    applyTrans.y = glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S);
+    applyTrans.z = glfwGetKey(window, GLFW_KEY_E) - glfwGetKey(window, GLFW_KEY_Q);
     
-    rotation += applyRot * ROTATION_SPEED;
+    vec3 applyScale;
+    applyScale.x = glfwGetKey(window, GLFW_KEY_RIGHT) - glfwGetKey(window, GLFW_KEY_LEFT);
+    applyScale.y = glfwGetKey(window, GLFW_KEY_UP) - glfwGetKey(window, GLFW_KEY_DOWN);
+    applyScale.z = 0.0f;
+
+    translation += applyTrans * TRANSLATION_SPEED;
+    scale += applyScale * SCALE_SPEED;
+}
+
+static void HandleCursorPosInput(GLFWwindow* window, double xpos, double ypos)
+{
+    rotation += vec3(ypos - last_mouse_pos.x, xpos - last_mouse_pos.y, 0.0f) * ROTATION_SPEED * cursor_locked;
+    
+    last_mouse_pos = vec3(ypos, xpos, 0.0f);
+}
+
+static void HandleMouseButtonInput(GLFWwindow* window, int button, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            cursor_locked = 1;
+        }
+        else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            cursor_locked = 0;
+        }
+    }
 }

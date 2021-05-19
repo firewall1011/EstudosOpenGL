@@ -139,10 +139,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\mat4.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\tvector.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\mat4.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\tvector.h" />
   </ItemGroup>

@@ -91,21 +91,28 @@ vec3* CriarCilindro(const int num_vertices, const float raio, const float height
     return vertices;
 }
 
-vec3 vec3::normalized()
+vec3 vec3::normalized() const
 {
     if (magnitude() == 0.0f)
         return { 0.0f };
     return { x / magnitude(), y / magnitude(), z / magnitude() };
 }
 
-float vec3::magnitude()
+float vec3::magnitude() const
 {
     return sqrtf(x * x + y * y + z * z);
 }
 
-vec3 vec3::operator*(float mult)
+vec3 vec3::operator*(const float mult) const
 {
     return { x * mult, y * mult, z * mult };
+}
+
+void vec3::operator*=(const float mult)
+{
+    this->x *= mult;
+    this->y *= mult;
+    this->z *= mult;
 }
 
 void vec3::operator+=(const vec3& other)
@@ -119,4 +126,12 @@ std::ostream& operator<<(std::ostream& os, const vec3& v)
 {
     os << "( " << v.x << ", " << v.y << ", " << v.z << " )" << std::endl;
     return os;
+}
+
+vec3 cos(const vec3& v) {
+    return vec3(cosf(v.x), cosf(v.y), cosf(v.z));
+}
+
+vec3 sin(const vec3& v) {
+    return vec3(sinf(v.x), sinf(v.y), sinf(v.z));
 }

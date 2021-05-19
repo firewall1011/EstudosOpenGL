@@ -152,6 +152,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Cilindro.cpp" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Piramide.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\common.shader" />
@@ -160,6 +162,9 @@
     <ProjectReference Include="..\TLibrary\TLibrary.vcxproj">
       <Project>{9a24a0dd-b005-418f-9312-087c20b4b159}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Exercicios.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
